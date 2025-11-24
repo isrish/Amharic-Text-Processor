@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amharic-text-processor"
+version = "0.1.10"
+description = "A modular toolkit for cleaning and normalizing Amharic text."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Ethiopic AI" }]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Text Processing :: Linguistic",
+]
+keywords = ["amharic", "text-processing", "Linguistic", "nlp", "ethiopic", "normalization"]
+dependencies = [
+    "beautifulsoup4>=4.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/isrish/Amharic-Text-Processor"
+Source = "https://github.com/isrish/Amharic-Text-Processor"
+Tracker = "https://github.com/isrish/Amharic-Text-Processor/issues"
+
+[tool.setuptools.packages.find]
+include = ["amharic_text_processor*"]
+
+[tool.setuptools.package-data]
+amharic_text_processor = ["assets/*.txt"]
