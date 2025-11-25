@@ -179,6 +179,13 @@ def test_number_to_geez_converts_in_text():
     assert result["numbers_converted"] is True
 
 
+def test_number_to_geez_handles_comma_thousands_separator():
+    processor = NumberToGeez()
+    result = processor.apply({"text": "ከ12,345 በላይ 7,000 አሉ"})
+    assert "፩፼፳፫፻፵፭" in result["text"]
+    assert "፸፻" in result["text"]
+
+
 def test_number_to_geez_handles_zero_and_negative():
     processor = NumberToGeez()
     result = processor.apply("0 -12")
@@ -242,3 +249,9 @@ def test_digits_to_word_number_handles_decimal():
     processor = DigitsToWordNumber()
     result = processor.apply({"text": "ቁጥር 123.45"})
     assert "መቶ ሃያ ሶስት ነጥብ አራት አምስት" in result["text"]
+
+
+def test_digits_to_word_number_handles_comma_thousands():
+    processor = DigitsToWordNumber()
+    result = processor.apply({"text": "ብዙ 12,345 ሰዎች"})
+    assert "አስራ ሁለት ሺህ ሶስት መቶ አርባ አምስት" in result["text"]

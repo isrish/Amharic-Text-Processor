@@ -37,7 +37,8 @@ class NumberToGeez:
 
     MARKERS = ["", "፻", "፼", "፼፻", "፼፼"]
 
-    number_pattern = re.compile(r"-?\d+")
+    # Match integers, allowing comma as a thousands separator (requires at least one comma when present).
+    number_pattern = re.compile(r"-?\d{1,3}(?:,\d{3})+|-?\d+")
 
     def apply(self, data: ProcessorInput) -> ProcessorOutput:
         text = BaseProcessor._extract_text(data)
@@ -45,7 +46,7 @@ class NumberToGeez:
         return {"text": replaced, "numbers_converted": text != replaced}
 
     def _replace_match(self, match: re.Match[str]) -> str:
-        raw = match.group(0)
+        raw = match.group(0).replace(",", "")
         if raw.startswith("-"):
             return "-" + self._to_geez(int(raw[1:]))
         return self._to_geez(int(raw))
@@ -306,7 +307,7 @@ class DigitsToWordNumber:
     HUNDRED = "መቶ"
     SCALES = ["", "ሺህ", "ሚሊዮን", "ቢሊዮን", "ትሪሊዮን"]
 
-    number_pattern = re.compile(r"-?\d+(?:\.\d+)?")
+    number_pattern = re.compile(r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?")
 
     def apply(self, data: ProcessorInput) -> ProcessorOutput:
         text = BaseProcessor._extract_text(data)
@@ -314,7 +315,7 @@ class DigitsToWordNumber:
         return {"text": converted, "numbers_converted": converted != text}
 
     def _replace_match(self, match: re.Match[str]) -> str:
-        raw = match.group(0)
+        raw = match.group(0).replace(",", "")
         negative = raw.startswith("-")
         body = raw[1:] if negative else raw
 
