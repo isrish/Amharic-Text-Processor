@@ -78,6 +78,13 @@ print(result["text"])
 - Processors run in order; output from one is passed to the next
 - Fail-fast validation on invalid inputs or processor outputs
 
+## 📚 Code Documentation
+
+- Each processor and the pipeline include docstrings describing inputs/outputs and behavior (see `amharic_text_processor/base.py`, `pipeline.py`, and files in `amharic_text_processor/processors/`).
+- Browse in an editor or via `pydoc amharic_text_processor.processors.<name>` for details.
+- All processors follow the same contract: `.apply(data: str | {"text": str}) -> {"text": str, ...}`.
+- See `docs/` for a quick reference (`docs/index.md`, `docs/processors.md`). To generate HTML docs locally you can run `pdoc -o docs amharic_text_processor`.
+
 ---
 
 ## 🧰 Built-in Processors
