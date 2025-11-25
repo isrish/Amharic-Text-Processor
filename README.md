@@ -1,8 +1,8 @@
 # Amharic Text Processor
 
-**Amharic Text Processor** is a modular Python toolkit for cleaning, normalizing, and formatting Amharic (and general) text. Each processing step is a small class with a predictable `.apply()` method, and steps are easily chained with `Pipeline`.
+**Amharic Text Processor** is a modular Python toolkit for cleaning, normalizing, and formatting Amharic text. Each processing step is a small class with a predictable `.apply()` method, and steps are easily chained with `Pipeline`.
 
-**Why this exists:** Amharic text from the web, documents, and OCR often arrives with HTML noise, mixed Ethiopic variants, inconsistent punctuation, legacy abbreviations, and numerals in different forms. This toolkit provides predictable, composable processors so you can rapidly build robust pipelines for ML datasets, search indexing, or downstream NLP tasks without reinventing cleaning logic.
+**Why this exists:** Amharic text from the web, documents, and OCR often arrives with HTML noise, mixed Ethiopic variants, inconsistent punctuation, legacy abbreviations, and numerals in different forms. This toolkit provides predictable, composable processors so you can rapidly build robust pipelines for ML datasets, search indexing, or downstream NLP tasks without reinventing cleaning logic. Most of the steps in this tool were used to process large amount of amharic text crawled from "amharic" specific websites. 
 
 ---
 
@@ -11,7 +11,11 @@
 - Composable pipeline built from simple processor classes
 - Consistent I/O contract: accepts `str` or `{"text": ...}`, returns a dict with `"text"`
 - HTML stripping, whitespace cleanup, Amharic character filtering
-- Punctuation and Unicode normalization plus configurable regex filtering
+- Punctuation and Unicode normalization (keeps Ethiopic marks, preserves decimals) plus configurable regex filtering
+- Sentence-level deduplication using fuzzy similarity
+- Abbreviation handling for slash/dot forms; dotted abbreviations can be normalized before expansion
+- Helpers to add spaces between Ethiopic letters and digits, and to place sentences on separate lines
+- Noise removal for common Latin/underscore tokens and foreign-only brackets
 - Pure, side-effect-free processors that are easy to test and extend
 
 ---
@@ -35,17 +39,21 @@ from amharic_text_processor.processors import (
     UnicodeNormalizer,
     CharacterRemapper,
     AbbreviationExpander,
+    DottedAbbreviationNormalizer,
     AmharicCharacterFilter,
+    CommonNoiseRemover,
 )
 
 pipeline = Pipeline([
     HtmlStripper(),             # drop HTML/script/style
     UnicodeNormalizer(),        # NFC + strip control chars
     CharacterRemapper(),        # normalize Ethiopic variants (ሠ->ሰ, ዐ->አ, ...)
+    DottedAbbreviationNormalizer(),  # turn dotted abbreviations into slash form
     AbbreviationExpander(),     # expand slash/dot abbreviations (e.g., ዓ.ም. -> ዓመተ ምሕረት)
-    PunctuationNormalizer(),    # unify punctuation and spacing
+    PunctuationNormalizer(),    # unify punctuation (keeps Ethiopic marks, protects decimals)
     WhitespaceNormalizer(),     # collapse repeated whitespace
     AmharicCharacterFilter(),   # keep Ethiopic chars and safe punctuation/digits
+    CommonNoiseRemover(),       # drop tokens like IMG_1124 or (FlyDubai)
 ])
 
 raw = """
@@ -57,7 +65,7 @@ raw = """
 
 result = pipeline.apply(raw)
 print(result["text"])
-# -> ሰላም. ሏ ዓመተ ምሕረት 2016 ሀይለ ማርያም በሚሊዮን ይዘት ሰጠ.
+# -> ሰላም። ሏ ዓመተ ምሕረት 2016 ሀይለ ማርያም በሚሊዮን ይዘት ሰጠ።
 ```
 
 ---
@@ -73,20 +81,37 @@ print(result["text"])
 
 ## 🧰 Built-in Processors
 
-- `HtmlStripper`: remove HTML tags and script/style content
-- `WhitespaceNormalizer`: collapse repeated whitespace and trim
-- `PunctuationNormalizer`: unify Ethiopic/ASCII punctuation and spacing
-- `UnicodeNormalizer`: normalize Unicode (default NFC) and strip control chars
-- `AmharicCharacterFilter`: keep Ethiopic characters plus safe punctuation/digits
-- `CharacterRemapper`: normalize variant Ethiopic glyphs to canonical forms
-- `AbbreviationExpander`: expand slash-separated Amharic abbreviations to full forms (e.g., ፍ/ቤቱ -> ፍርድ ቤቱ, ፕ/ር -> ፕሮፌሰር)
-- `NumberToGeez`: convert Arabic digits in text to Ethiopic (Geez) numerals
-- `GeezToNumber`: convert Ethiopic (Geez) numerals back to Arabic digits
-- `WordNumberToDigits`: convert Amharic worded numbers (e.g., “ሁለት ሺህ ሶስት መቶ”) to Arabic digits, including millions+
-- `DigitsToWordNumber`: turn Arabic digit sequences into Amharic worded numbers (supports up to trillions)
-- `OldPhoneMapper`: convert legacy phone representations to modern forms via a predefined mapping
-- `EthiopicNumberSpacer`: insert spaces between Ethiopic letters and adjacent digits (e.g., "ዜና11" -> "ዜና 11")
-- `RegexFilter`: run a configurable regex substitution with counts
+- [`HtmlStripper`](amharic_text_processor/processors/html.py): remove HTML tags and script/style content
+- [`WhitespaceNormalizer`](amharic_text_processor/processors/whitespace.py): collapse repeated whitespace and trim
+- [`PunctuationNormalizer`](amharic_text_processor/processors/normalize.py): unify Ethiopic/ASCII punctuation, collapse repeats, keep decimals intact
+- [`UnicodeNormalizer`](amharic_text_processor/processors/normalize.py): normalize Unicode (default NFC) and strip control chars
+- [`AmharicCharacterFilter`](amharic_text_processor/processors/filters.py): keep Ethiopic characters plus safe punctuation/digits
+- [`CharacterRemapper`](amharic_text_processor/processors/normalize.py): normalize variant Ethiopic glyphs to canonical forms
+- [`DottedAbbreviationNormalizer`](amharic_text_processor/processors/abbreviations.py): convert dotted abbreviations (e.g., እ.ኤ.አ) into slash form before expansion
+- [`AbbreviationExpander`](amharic_text_processor/processors/abbreviations.py): expand slash/dot Amharic abbreviations to full forms (e.g., ፍ/ቤቱ -> ፍርድ ቤቱ, ፕ/ር -> ፕሮፌሰር, ዓ.ም. -> ዓመተ ምሕረት)
+- [`NumberToGeez`](amharic_text_processor/processors/numbers.py): convert Arabic digits in text to Ethiopic (Geez) numerals
+- [`GeezToNumber`](amharic_text_processor/processors/numbers.py): convert Ethiopic (Geez) numerals back to Arabic digits
+- [`WordNumberToDigits`](amharic_text_processor/processors/numbers.py): convert Amharic worded numbers (e.g., “ሁለት ሺህ ሶስት መቶ”) to Arabic digits, including millions+
+- [`DigitsToWordNumber`](amharic_text_processor/processors/numbers.py): turn Arabic digit sequences into Amharic worded numbers (supports up to trillions)
+- [`OldPhoneMapper`](amharic_text_processor/processors/phonetic.py): convert legacy phone representations to modern forms via a predefined mapping
+- [`EthiopicNumberSpacer`](amharic_text_processor/processors/tokenize.py): insert spaces between Ethiopic letters and adjacent digits (e.g., "ዜና11" -> "ዜና 11")
+- [`SentenceLineFormatter`](amharic_text_processor/processors/tokenize.py): place each sentence on its own line after end punctuation
+- [`SentenceDeduplicator`](amharic_text_processor/processors/deduplication.py): drop exact or near-duplicate sentences with RapidFuzz similarity
+- [`CommonNoiseRemover`](amharic_text_processor/processors/filters.py): remove noisy tokens like `IMG_1124` or non-Ethiopic bracketed text `(somewords)`
+- [`RegexFilter`](amharic_text_processor/processors/filters.py): run a configurable regex substitution with counts
+
+### Sentence deduplication example
+
+```python
+from amharic_text_processor.processors import SentenceDeduplicator
+
+deduper = SentenceDeduplicator(similarity_threshold=0.85)
+text = "ሰላም ዓለም። ሰላም ዓለም። እንዴት ነህ? እርስዎ እንዴት ነው?"
+result = deduper.apply(text)
+print(result["text"])
+# -> ሰላም ዓለም። እንዴት ነህ?
+print(result["sentences_removed"])  # duplicates that were dropped
+```
 
 ---
 
@@ -121,7 +146,7 @@ See CONTRIBUTING.md for guidelines on adding processors, running tests, and codi
 
 GitHub Actions workflows are included:
 - `CI` runs tests on pushes/PRs.
-- `Publish to PyPI` builds and publishes on release creation (requires `PYPI_API_TOKEN` secret).
+- `Publish to PyPI` builds and publishes on release creation.
 - See CHANGELOG.md for release notes.
 
 ---

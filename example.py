@@ -10,20 +10,29 @@ from amharic_text_processor.processors import (
     GeezToNumber,
     DigitsToWordNumber,
     WordNumberToDigits,
+    SentenceDeduplicator,
+    SentenceLineFormatter,
+    DottedAbbreviationNormalizer,
+    CommonNoiseRemover
 )
 
 pipeline = Pipeline([
     HtmlStripper(),
+    CommonNoiseRemover(),
     WhitespaceNormalizer(),
     PunctuationNormalizer(),
-    UnicodeNormalizer(),
+    UnicodeNormalizer(strip_control=False),
     AmharicCharacterFilter(),
+    DottedAbbreviationNormalizer(),
     AbbreviationExpander(),
     NumberToGeez(),
     GeezToNumber(),
+    SentenceDeduplicator(),
+    WhitespaceNormalizer(),
+    SentenceLineFormatter(), # Add new line after sentences. optional used for output formatting.
 ])
 
-raw = "<p>  ሰላም  እንዴት  ነህ። ካፒታሊዝም የሚያበቃለት ይመስለኛል ሲሉ ረዳት ፕ/ር መድኃኔ ታደሰ ለሩሕ በሰጡት ቃለ ምልልስ ገለፁ።</p>"
+raw = "<p>  የግሎባል... ሰላም  እንዴት  ነህ። ካፒታሊዝም የሚያበቃለት ይመስለኛል ሲሉ ረዳት ፕ/ር መድኃኔ ታደሰ ለሩሕ በሰጡት ቃለ ምልልስ ገለፁ።</p>"
 result = pipeline.apply(raw)
 print(raw)
 print(result["text"])  # -> ሰላም እንዴት ነህ.
@@ -52,3 +61,11 @@ raw = "በ2017 ዓ.ም. ከጥራጥሬ ምርት 272.5 ሚሊዮን ዶላር�
 new_text = pipeline.apply(raw)
 print(new_text["text"])  # 
 # . -> 
+
+print("----- Example of full pipeline on sample_crawled.txt -----")
+with open("sample_crawled.txt", "r", encoding="utf-8") as f:
+    raw = f.read()
+    cleaned = pipeline.apply(raw)
+    print(cleaned["text"][:500])  # print first 500 characters of cleaned text
+    with open("cleaned_output.txt", "w", encoding="utf-8") as out_f:
+        out_f.write(cleaned["text"])  # save cleaned text to file

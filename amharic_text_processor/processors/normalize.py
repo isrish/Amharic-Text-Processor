@@ -13,13 +13,6 @@ class PunctuationNormalizer:
 
     PUNCT_TRANSLATION = str.maketrans(
         {
-            "።": ".",
-            "፣": ",",
-            "፤": ";",
-            "፥": ":",
-            "፦": ":",
-            "፧": "?",
-            "፨": "!",
             "“": '"',
             "”": '"',
             "‘": "'",
@@ -36,16 +29,31 @@ class PunctuationNormalizer:
 
     def apply(self, data: ProcessorInput) -> ProcessorOutput:
         text = BaseProcessor._extract_text(data)
-        normalized = text.translate(self.PUNCT_TRANSLATION)
-        normalized = re.sub(r"([?!.,;:]){2,}", r"\1", normalized)
-        normalized = re.sub(r"\s+([?!.,;:])", r" \1", normalized)
-        normalized = re.sub(r"([?!.,;:])([^\s])", r"\1 \2", normalized)
+        # Protect decimal numbers so spacing rules do not split them.
+        decimals: list[tuple[str, str]] = []
+
+        def _capture_decimal(match: re.Match[str]) -> str:
+            token = f"__DECIMAL_{len(decimals)}__"
+            decimals.append((token, match.group(0)))
+            return token
+
+        protected = re.sub(r"\d+\.\d+", _capture_decimal, text)
+
+        normalized = protected.translate(self.PUNCT_TRANSLATION)
+        punct_all = r"[?!.,;:።፣፤፥፦፧፨]"
+        punct_spacing = r"[?!,;:።፣፤፥፦፧፨]"
+        # Collapse repeated punctuation to a single mark.
+        normalized = re.sub(rf"({punct_all}){{2,}}", r"\1", normalized)
+        # Do not insert spaces after punctuation (to preserve formats like 8.5%).
+        # Restore protected decimals intact.
+        for token, value in decimals:
+            normalized = normalized.replace(token, value)
         normalized = re.sub(r"\s+", " ", normalized).strip()
         return {"text": normalized, "punctuation_normalized": normalized != text}
 
 
 class UnicodeNormalizer:
-    """Normalize Unicode using the given form (default NFC)."""
+    """Normalize Unicode to a specific form (default NFC) and optionally strip control characters."""
 
     def __init__(self, form: str = "NFC", strip_control: bool = True) -> None:
         self.form = form

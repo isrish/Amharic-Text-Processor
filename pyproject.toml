@@ -28,6 +28,7 @@ classifiers = [
 keywords = ["amharic", "text-processing", "Linguistic", "nlp", "ethiopic", "normalization"]
 dependencies = [
     "beautifulsoup4>=4.12",
+    "rapidfuzz>=3.0",
 ]
 
 [project.urls]
@@ -40,7 +41,7 @@ include = ["amharic_text_processor*"]
 
 
 [tool.setuptools.package-data]
-amharic_text_processor = ["assets/*.txt"]
+amharic_text_processor = ["assets/*.py"]
 
 
 [tool.pytest.ini_options]

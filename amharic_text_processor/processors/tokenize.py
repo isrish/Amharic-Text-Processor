@@ -25,3 +25,20 @@ class EthiopicNumberSpacer:
 
         spaced = self.pattern.sub(replacer, text)
         return {"text": spaced, "spaces_added_between_text_and_digits": spaced != text}
+
+
+class SentenceLineFormatter(BaseProcessor):
+    """Insert a newline after each sentence-ending punctuation mark."""
+
+    _sentence_end = re.compile(r"\s*([!?።፧፨])\s*") # Matches sentence-ending punctuation with surrounding whitespace.
+
+    def apply(self, data: ProcessorInput) -> ProcessorOutput:
+        text = BaseProcessor._extract_text(data)
+        # Insert newlines after sentence-ending punctuation and normalize whitespace.
+        formatted = self._sentence_end.sub(r"\1\n", text)
+        formatted = re.sub(r"[ \t]+\n", "\n", formatted)  # trim trailing spaces before newline
+        formatted = re.sub(r"\n{2,}", "\n", formatted)  # collapse duplicate newlines
+        formatted = formatted.strip()
+        if not formatted.endswith("\n"):
+            formatted = f"{formatted}\n"
+        return {"text": formatted, "sentences_formatted": formatted != text}

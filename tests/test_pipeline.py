@@ -11,7 +11,7 @@ from amharic_text_processor.processors import (
 def test_pipeline_applies_processors_in_order():
     pipeline = Pipeline([HtmlStripper(), WhitespaceNormalizer(), PunctuationNormalizer()])
     result = pipeline.apply("<p>ሰላም   እንዴት ነህ።</p>")
-    assert result["text"] == "ሰላም እንዴት ነህ."
+    assert result["text"] == "ሰላም እንዴት ነህ።"
 
 
 def test_pipeline_accepts_dict_input():

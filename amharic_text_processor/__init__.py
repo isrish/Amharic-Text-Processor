@@ -17,6 +17,7 @@ from .processors import (
     UnicodeNormalizer,
     WhitespaceNormalizer,
     CharacterRemapper,
+    SentenceDeduplicator,
 )
 
 __version__ = "0.1"
@@ -41,6 +42,7 @@ __all__ = [
     "DigitsToWordNumber",
     "OldPhoneMapper",
     "EthiopicNumberSpacer",
+    "SentenceDeduplicator",
     "version_info",
     "__version__",
     "__semver__",

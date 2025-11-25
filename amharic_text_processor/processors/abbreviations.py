@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import csv
 import re
-from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
+
+from amharic_text_processor.assets.abbreviations import ABBREVIATIONS
 
 from amharic_text_processor.base import BaseProcessor, ProcessorInput, ProcessorOutput
 
@@ -13,32 +13,10 @@ from amharic_text_processor.base import BaseProcessor, ProcessorInput, Processor
 class AbbreviationExpander:
     """Replace abbreviations (characters separated by slashes) with their full forms."""
 
-    def __init__(self, abbreviations_path: Path | None = None) -> None:
-        default_path = Path(__file__).resolve().parents[1] / "assets" / "AmharicAbbreviations.txt"
-        self.abbreviations_path = abbreviations_path or default_path
-        self._mapping = self._load_abbreviations(self.abbreviations_path)
-        # Hard-coded unique abbreviations not covered by the CSV. 
-        # TODO: add to CSV later.
-        self._mapping.update({"ዓ.ም.": "ዓመተ ምሕረት"})
+    def __init__(self, mapping: Dict[str, str] | None = None) -> None:
+        self._mapping = dict(ABBREVIATIONS if mapping is None else mapping)
         self._patterns: List[Tuple[re.Pattern[str], str]] = self._build_patterns(self._mapping)
-        self._raw_abbr_pattern = re.compile(r"[^\s/]+(?:/+[^\s/]+)+")
-
-    @staticmethod
-    def _load_abbreviations(path: Path) -> Dict[str, str]:
-        if not path.exists():
-            raise FileNotFoundError(f"Abbreviations file not found: {path}")
-
-        mapping: Dict[str, str] = {}
-        with path.open(encoding="utf-8", newline="") as handle:
-            reader = csv.reader(handle)
-            next(reader, None)  # skip header
-            for row in reader:
-                if len(row) < 2:
-                    continue
-                abbreviation, meaning = row[0].strip(), row[1].strip()
-                if abbreviation and meaning:
-                    mapping[abbreviation] = meaning
-        return mapping
+        self._raw_abbr_pattern = re.compile(r"[^\s/\.]+(?:(?:/+|\.+)[^\s/\.]+)+")
 
     @staticmethod
     def _build_patterns(mapping: Dict[str, str]) -> List[Tuple[re.Pattern[str], str]]:
@@ -72,7 +50,36 @@ class AbbreviationExpander:
         unknown: set[str] = set()
         for match in self._raw_abbr_pattern.finditer(text):
             raw = match.group(0)
-            normalized = re.sub(r"/+", "/", raw.strip("/"))
+            normalized = re.sub(r"[/.]+", "/", raw.strip("/."))
             if normalized and normalized not in self._mapping:
                 unknown.add(normalized)
         return list(unknown)
+
+
+class DottedAbbreviationNormalizer(BaseProcessor):
+    """Convert dotted Amharic abbreviations (e.g., እ. ኤ. አ.) into slash format (እ/ኤ/አ).
+
+    A valid dotted abbreviation is expected to start after a space or an opening parenthesis.
+    """
+
+    _pattern = re.compile(
+        r"(?:(?<=\s)|(?<=\()|(?<=^))"  # preceded by space, ( , or start
+        r"((?:[\u1200-\u137F]{1,3}\s*\.\s*)+[\u1200-\u137F]{1,3})"  # dotted segments
+        r"\.?"  # optional trailing dot
+        r"(?=\s|\)|$)"  # must end before space, closing paren, or end
+    )
+
+    def apply(self, data: ProcessorInput) -> ProcessorOutput:
+        text = self._extract_text(data)
+
+        def replace(match: re.Match[str]) -> str:
+            abbr = match.group(1)
+            parts = [part.strip() for part in re.split(r"\s*\.\s*", abbr) if part.strip()]
+            replacement = "/".join(parts)
+            # Do not append a slash for the trailing dot; add a space only if needed.
+            next_char = text[match.end(0) : match.end(0) + 1]
+            suffix = "" if not next_char or next_char.isspace() or next_char == ")" else " "
+            return replacement + suffix
+
+        converted, count = self._pattern.subn(replace, text)
+        return {"text": converted, "dotted_abbreviations_normalized": count > 0}

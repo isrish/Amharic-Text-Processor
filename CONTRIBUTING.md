@@ -46,4 +46,4 @@ pytest -q
 ## Release checklist (maintainers)
 - All tests pass.
 - README and docs updated.
-- Version bumped (pyproject.toml/setup.cfg) when publishing.
+- Version bumped (pyproject.toml) when publishing.
