@@ -8,6 +8,7 @@ from .numbers import DigitsToWordNumber, GeezToNumber, NumberToGeez, WordNumberT
 from .tokenize import EthiopicNumberSpacer, SentenceLineFormatter
 from .phonetic import OldPhoneMapper
 from .deduplication import SentenceDeduplicator
+from .transliterate import AmharicTransliterator
 from .whitespace import WhitespaceNormalizer
 
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "SentenceDeduplicator",
     "SentenceLineFormatter",
     "DottedAbbreviationNormalizer",
+    "AmharicTransliterator",
 ]

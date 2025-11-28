@@ -17,6 +17,7 @@
 - Abbreviation handling for slash/dot forms; dotted abbreviations can be normalized before expansion
 - Helpers to add spaces between Ethiopic letters and digits, and to place sentences on separate lines
 - Noise removal for common Latin/underscore tokens and foreign-only brackets
+- Ethiopic→Latin transliteration using a romanization table
 - Pure, side-effect-free processors that are easy to test and extend
 
 ---
@@ -105,7 +106,8 @@ print(result["text"])
 - [`EthiopicNumberSpacer`](amharic_text_processor/processors/tokenize.py): insert spaces between Ethiopic letters and adjacent digits (e.g., "ዜና11" -> "ዜና 11")
 - [`SentenceLineFormatter`](amharic_text_processor/processors/tokenize.py): place each sentence on its own line after end punctuation
 - [`SentenceDeduplicator`](amharic_text_processor/processors/deduplication.py): drop exact or near-duplicate sentences with RapidFuzz similarity
-- [`CommonNoiseRemover`](amharic_text_processor/processors/filters.py): remove noisy tokens like `IMG_1124` or non-Ethiopic bracketed text `(somewords)`
+- [`AmharicTransliterator`](amharic_text_processor/processors/transliterate.py): transliterate Ethiopic (Amharic) text to Latin using a romanization table
+- [`CommonNoiseRemover`](amharic_text_processor/processors/filters.py): remove noisy tokens like `IMG_1124` or non-Ethiopic bracketed text `(some_not_amharic_words)`
 - [`RegexFilter`](amharic_text_processor/processors/filters.py): run a configurable regex substitution with counts
 
 ### Sentence deduplication example

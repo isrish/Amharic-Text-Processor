@@ -13,7 +13,8 @@ from amharic_text_processor.processors import (
     SentenceDeduplicator,
     SentenceLineFormatter,
     DottedAbbreviationNormalizer,
-    CommonNoiseRemover
+    CommonNoiseRemover,
+    AmharicTransliterator,
 )
 
 pipeline = Pipeline([
@@ -69,3 +70,9 @@ with open("sample_crawled.txt", "r", encoding="utf-8") as f:
     print(cleaned["text"][:500])  # print first 500 characters of cleaned text
     with open("cleaned_output.txt", "w", encoding="utf-8") as out_f:
         out_f.write(cleaned["text"])  # save cleaned text to file
+
+
+# transliterate Amharic text to Latin using a romanization table
+rawtext = "እሺ፣ የክፍያ ሂደቱን በአማርኛ እመራዎታለሁ። የአካውንት ቁጥርዎን ያስገቡ።"
+new_text = AmharicTransliterator().apply(rawtext)
+print(new_text["text"])  # 

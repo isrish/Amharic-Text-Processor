@@ -21,6 +21,7 @@ from amharic_text_processor.processors import (
     SentenceDeduplicator,
     SentenceLineFormatter,
     DottedAbbreviationNormalizer,
+    AmharicTransliterator,
 )
 
 
@@ -169,6 +170,13 @@ def test_noise_remover_strips_file_tokens_and_latin_brackets():
     assert "IMG_1124" not in result["text"]
     assert "(" not in result["text"]
     assert result["noise_removed"] >= 2
+
+
+def test_amharic_transliterator_basic_phrase():
+    processor = AmharicTransliterator()
+    result = processor.apply({"text": "ሰላም አማርኛ"})
+    assert "salaame" in result["text"]
+    assert "amaarenyaa" in result["text"]
 
 
 def test_number_to_geez_converts_in_text():
