@@ -106,7 +106,7 @@ print(new_text["text"])
 - [`AbbreviationExpander`](amharic_text_processor/processors/abbreviations.py): expand slash/dot Amharic abbreviations to full forms (e.g., ፍ/ቤቱ -> ፍርድ ቤቱ, ፕ/ር -> ፕሮፌሰር, ዓ.ም. -> ዓመተ ምሕረት)
 - [`NumberToGeez`](amharic_text_processor/processors/numbers.py): convert Arabic digits in text to Ethiopic (Geez) numerals (e.g., 31 -> ፴፩)
 - [`GeezToNumber`](amharic_text_processor/processors/numbers.py): convert Ethiopic (Geez) numerals back to Arabic digits  (e.g., ፴፩ -> 31)
-- [`WordNumberToDigits`](amharic_text_processor/processors/numbers.py): convert Amharic worded numbers (e.g., “ሁለት ሺህ ሶስት መቶ”) to Arabic digits, including millions+
+- [`WordNumberToDigits`](amharic_text_processor/processors/numbers.py): convert Amharic worded numbers (e.g., “ሁለት ሺህ ሶስት መቶ”) to Arabic digits
 - [`DigitsToWordNumber`](amharic_text_processor/processors/numbers.py): turn Arabic digit sequences into Amharic worded numbers (supports up to trillions)
 - [`OldPhoneMapper`](amharic_text_processor/processors/phonetic.py): convert legacy phone representations to modern forms via a predefined mapping
 - [`EthiopicNumberSpacer`](amharic_text_processor/processors/tokenize.py): insert spaces between Ethiopic letters and adjacent digits (e.g., "ዜና11" -> "ዜና 11")
